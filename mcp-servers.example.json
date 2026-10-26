@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "gsheets": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "<PATH_TO_YOUR_GSHEETS_MCP_CHECKOUT>",
+        "gsheets-mcp"
+      ],
+      "env": {}
+    }
+  }
+}

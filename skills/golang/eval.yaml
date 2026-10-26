@@ -1,0 +1,127 @@
+version: '1'
+
+defaults:
+  agent: claude
+  trials: 1
+  threshold: 0.7
+  provider: local
+
+tasks:
+  - name: error-handling
+    instruction: |
+      Implement a configuration loader that demonstrates idiomatic Go error handling.
+
+      Your implementation should:
+      - Wrap errors with context using fmt.Errorf with %w
+      - Define custom error types when appropriate
+      - Use sentinel errors for common cases
+      - Never ignore errors (no blank identifiers for errors)
+      - Return early on error conditions
+      - Follow the "accept interfaces, return structs" principle
+
+      Create a file `config_loader.go` that:
+      1. Defines a LoadConfig function that reads from io.Reader
+      2. Defines custom ValidationError type
+      3. Uses sentinel errors for common cases (ErrInvalidFormat, ErrMissingField)
+      4. Properly wraps errors with context
+      5. Returns concrete types, accepts interfaces
+
+      See README.md in the workspace for detailed requirements.
+    workspace:
+      - src: workspace/task1-error-handling
+        dest: .
+    graders:
+      - type: deterministic
+        run: node graders/go-validator.js
+        weight: 0.7
+      - type: llm_rubric
+        provider: anthropic
+        weight: 0.3
+        rubric: |
+          Evaluate Go error handling implementation. Score across three dimensions:
+
+          Correctness & Idioms (0-0.4): Are errors wrapped with %w? Are custom error types properly defined? Are sentinel errors used correctly? Does it follow "accept interfaces, return structs"? Are errors never ignored?
+
+          Code Quality (0-0.3): Is code simple and clear? Are types well-designed? Is zero value useful? Are variable names idiomatic? Is the code maintainable?
+
+          Pattern Compliance (0-0.3): Does code follow skill patterns? Are errors.Is/errors.As used when needed? Is error context meaningful? Are anti-patterns avoided (panic for errors, ignoring errors)?
+
+  - name: concurrency-patterns
+    instruction: |
+      Implement a worker pool that demonstrates idiomatic Go concurrency patterns.
+
+      Your implementation should:
+      - Use goroutines and channels correctly
+      - Implement proper synchronization with sync.WaitGroup
+      - Use context for cancellation and timeouts
+      - Avoid goroutine leaks
+      - Close channels properly
+      - Handle errors from concurrent operations
+
+      Create a file `worker_pool.go` that implements:
+      1. A ProcessJobs function that uses a worker pool pattern
+      2. Accepts context for cancellation
+      3. Uses sync.WaitGroup for coordination
+      4. Properly closes channels
+      5. Collects and returns errors from workers
+      6. Gracefully shuts down on context cancellation
+
+      See README.md in the workspace for detailed requirements.
+    workspace:
+      - src: workspace/task2-concurrency-patterns
+        dest: .
+    graders:
+      - type: deterministic
+        run: node graders/go-validator.js
+        weight: 0.7
+      - type: llm_rubric
+        provider: anthropic
+        weight: 0.3
+        rubric: |
+          Evaluate Go concurrency implementation. Score across three dimensions:
+
+          Correctness & Safety (0-0.4): Are goroutines properly coordinated? Is WaitGroup used correctly? Are channels closed properly? Is context used for cancellation? Are race conditions avoided? No goroutine leaks?
+
+          Code Quality (0-0.3): Is concurrency logic clear? Are variable names meaningful? Is the code maintainable? Are defer statements used appropriately? Is error handling correct?
+
+          Pattern Compliance (0-0.3): Does code follow worker pool pattern from skill? Is context.Context the first parameter? Are channels closed by the sender? Are anti-patterns avoided (unbuffered channels causing deadlocks, missing context)?
+
+  - name: interface-design
+    instruction: |
+      Implement a data processor that demonstrates idiomatic Go interface design.
+
+      Your implementation should:
+      - Define small, focused interfaces
+      - Accept interfaces, return structs
+      - Define interfaces where they're used (consumer side)
+      - Use the zero value when possible
+      - Implement optional behavior with type assertions
+      - Follow naming conventions (Reader, Writer, Closer patterns)
+
+      Create a file `data_processor.go` that:
+      1. Defines small interfaces (Validator, Transformer, etc.)
+      2. Implements a Process function that accepts interface parameters
+      3. Returns concrete struct types
+      4. Uses type assertions for optional behavior
+      5. Makes zero value useful where possible
+      6. Follows io.Reader/io.Writer naming patterns
+
+      See README.md in the workspace for detailed requirements.
+    workspace:
+      - src: workspace/task3-interface-design
+        dest: .
+    graders:
+      - type: deterministic
+        run: node graders/go-validator.js
+        weight: 0.7
+      - type: llm_rubric
+        provider: anthropic
+        weight: 0.3
+        rubric: |
+          Evaluate Go interface design. Score across three dimensions:
+
+          Design & Idioms (0-0.4): Are interfaces small and focused? Does it accept interfaces, return structs? Are interfaces defined on consumer side? Are interface names idiomatic (-er suffix)? Is zero value useful?
+
+          Code Quality (0-0.3): Is code simple and clear? Are types well-designed? Is composition used over inheritance? Are naming conventions followed? Is the code maintainable?
+
+          Pattern Compliance (0-0.3): Does code follow interface patterns from skill? Are type assertions used correctly? Are standard library patterns followed (io.Reader/Writer)? Are anti-patterns avoided (large interfaces, return interfaces)?

@@ -1,0 +1,158 @@
+version: "1"
+
+defaults:
+  agent: claude
+  provider: local
+  trials: 3
+  timeout: 120
+  threshold: 0.8
+
+tasks:
+  - name: modernize-legacy-go
+    instruction: |
+      Rewrite the following Go code using modern Go idioms and save it to `modern.go`.
+      Use the `use-modern-go` skill to guide your modernization.
+
+      ```go
+      package main
+
+      import (
+        "context"
+        "errors"
+        "fmt"
+        "sort"
+        "strings"
+        "sync"
+        "testing"
+      )
+
+      func findUser(items []string, target string) int {
+        for i := 0; i < len(items); i++ {
+          if items[i] == target {
+            return i
+          }
+        }
+        return -1
+      }
+
+      func mergeConfigs(dst, src map[string]string) {
+        for k, v := range src {
+          dst[k] = v
+        }
+      }
+
+      func sortNames(names []string) []string {
+        sort.Strings(names)
+        return names
+      }
+
+      func maxVal(a, b int) int {
+        if a > b {
+          return a
+        }
+        return b
+      }
+
+      func processItems(items []string) {
+        var wg sync.WaitGroup
+        for _, item := range items {
+          item := item
+          wg.Add(1)
+          go func() {
+            defer wg.Done()
+            fmt.Println(item)
+          }()
+        }
+        wg.Wait()
+      }
+
+      func parseCSV(s string) []string {
+        return strings.Split(s, ",")
+      }
+
+      func TestFoo(t *testing.T) {
+        ctx, cancel := context.WithCancel(context.Background())
+        defer cancel()
+        _ = ctx
+      }
+
+      var ErrNotFound = errors.New("not found")
+      ```
+
+    workspace: []
+
+    graders:
+      - type: deterministic
+        run: |
+          set -e
+          checks=()
+          score=0
+          total=6
+
+          if [ ! -f modern.go ]; then
+            printf '{"score":0.0,"details":"modern.go not found","checks":[]}'
+            exit 0
+          fi
+
+          content=$(cat modern.go)
+
+          if echo "$content" | grep -q "slices.Index"; then
+            checks+=('{"name":"slices-index","passed":true,"message":"slices.Index used instead of manual loop"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"slices-index","passed":false,"message":"slices.Index not found — should replace manual for loop"}')
+          fi
+
+          if echo "$content" | grep -q "maps.Copy"; then
+            checks+=('{"name":"maps-copy","passed":true,"message":"maps.Copy used instead of manual iteration"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"maps-copy","passed":false,"message":"maps.Copy not found — should replace manual map copy loop"}')
+          fi
+
+          if echo "$content" | grep -q "slices.Sort"; then
+            checks+=('{"name":"slices-sort","passed":true,"message":"slices.Sort used instead of sort.Strings"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"slices-sort","passed":false,"message":"slices.Sort not found — should replace sort.Strings"}')
+          fi
+
+          if echo "$content" | grep -qE "max\(a, b\)"; then
+            checks+=('{"name":"builtin-max","passed":true,"message":"built-in max() used instead of if/else"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"builtin-max","passed":false,"message":"built-in max() not found — should replace if/else with built-in max()"}')
+          fi
+
+          if echo "$content" | grep -q "wg.Go("; then
+            checks+=('{"name":"wg-go","passed":true,"message":"wg.Go() used instead of wg.Add(1)+goroutine"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"wg-go","passed":false,"message":"wg.Go() not found — should replace wg.Add(1)/wg.Done() pattern"}')
+          fi
+
+          if echo "$content" | grep -q "t.Context()"; then
+            checks+=('{"name":"t-context","passed":true,"message":"t.Context() used instead of context.WithCancel"}')
+            score=$((score + 1))
+          else
+            checks+=('{"name":"t-context","passed":false,"message":"t.Context() not found — should replace context.WithCancel in tests"}')
+          fi
+
+          joined=$(IFS=,; echo "${checks[*]}")
+          final=$(LC_NUMERIC=C awk "BEGIN {printf \"%.2f\", $score / $total}")
+          printf '{"score":%s,"details":"%d/%d checks passed","checks":[%s]}' "$final" "$score" "$total" "$joined"
+        weight: 0.7
+
+      - type: llm_rubric
+        provider: anthropic
+        model: anthropic--claude-4.5-haiku
+        rubric: |
+          Evaluate whether the agent correctly modernized the Go code:
+          - Did it replace the manual for loop with slices.Index?
+          - Did it replace the manual map copy with maps.Copy?
+          - Did it replace sort.Strings with slices.Sort?
+          - Did it replace the if/else max with the built-in max()?
+          - Did it replace wg.Add(1)/wg.Done() with wg.Go()?
+          - Did it replace context.WithCancel in the test with t.Context()?
+          - Is the modernized code idiomatic and correct?
+        weight: 0.3
