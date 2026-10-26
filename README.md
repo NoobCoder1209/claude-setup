@@ -23,8 +23,8 @@ claude-setup/
 `code-reviewer`, `docs-fact-checker`, `docu-writer`, `pr-ci-fixer`,
 `pr-comment-implementer`, `pr-reviewer`, `requirements-analyst`, `tester`
 
-### Skills (8)
-`agent-writer`, `croner`, `golang`, `grill-me`, `pr-address-comments`,
+### Skills (7)
+`agent-writer`, `golang`, `grill-me`, `pr-address-comments`,
 `skill-creator`, `ui-ux-pro-max`, `use-modern-go`
 
 ### Rules (1)
